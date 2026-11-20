@@ -23,7 +23,7 @@
     "url": "https://github.com/Skysparl/Damulink/issues"
   },
   "homepage": "https://github.com/Skysparl/Damulink#readme",
-  "private": "true",
+  "private": true,
   "dependencies": {
     "firebase": "^13.4.0",
     "react": "^19.3.1",
