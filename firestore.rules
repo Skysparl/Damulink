@@ -1,0 +1,64 @@
+rules_version = '2';
+
+services  cloud.firestore {
+    match /databases/{databases}/documents {
+        function signedIn() {
+            return request.auth != null;
+        }
+        function isOwner() {
+            return signedIn() && resource.data.createdBy == request.auth.uid;
+    }
+
+    function validBlodtype(value)  {
+        return request.auth != null;
+        } 
+        function validBloodType(value) {
+            return value in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
+        }
+        function pledgeOnly() {
+            return request.resource.data.diff(resource.data).affectKeys()
+              .hasOnly(['unitspledged', 'status', 'updatedAt'])
+            && request.resource.data.unitsPledged >= resource.data.unitsPledged
+        && request.resource.data.unitsPledged <= resource.data.units
+        && (
+                      (request.resource.data.unitsPledged == resource.data.units
+            && request.resource.data.status == 'fulfilled')
+          ||
+          (request.resource.data.unitsPledged < resource.data.units
+            && request.resource.data.status == 'open')
+        );
+    }
+
+    match /appeals/{appealId} {
+      allow read: if true;
+
+      allow create: if signedIn()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.unitsPledged == 0
+        && request.resource.data.status == 'open'
+        && request.resource.data.patientName is string
+        && request.resource.data.patientName.size() >= 2
+        && request.resource.data.hospital is string
+        && request.resource.data.hospital.size() >= 2
+        && validBloodType(request.resource.data.bloodType)
+        && request.resource.data.units is int
+        && request.resource.data.units >= 1
+        && request.resource.data.units <= 20
+        && request.resource.data.contactPhone is string
+        && request.resource.data.contactPhone.matches('^0[17][0-9]{8}$');
+
+      allow update: if signedIn()
+        && (isOwner() || pledgeOnly())
+        && request.resource.data.createdBy == resource.data.createdBy;
+
+      allow delete: if isOwner();
+    }
+
+    match /users/{userId} {
+      allow read, write: if signedIn() && request.auth.uid == userId;
+    }
+
+        )
+        }
+    }
+}
