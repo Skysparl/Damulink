@@ -7,12 +7,14 @@ const BLOOD_SIZES = {
 const URGENCY_STYLES = {
   critical: 'bg-crimson text-white',
   urgent: 'bg-amber-500 text-white',
+  routine: 'bg-teal text-white',
   normal: 'bg-teal text-white',
 };
 
 const URGENCY_LABELS = {
   critical: 'Critical',
   urgent: 'Urgent',
+  routine: 'Routine',
   normal: 'Normal',
 };
 
