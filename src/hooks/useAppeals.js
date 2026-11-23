@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { fetchAppeal, fetchAppeals, pledgeUnits } from '../services/appealService.js'
+import {
+  fetchAppeal,
+  fetchAppeals,
+  pledgeUnits,
+  subscribeToAppeals,
+} from '../services/appealService.js'
 
 export function useAppeals() {
   const { user } = useAuth()
@@ -32,8 +37,20 @@ export function useAppeals() {
   }, [])
 
   useEffect(() => {
-    refresh()
-  }, [refresh])
+    const unsubscribe = subscribeToAppeals(
+      (data) => {
+        if (!alive.current) return
+        setAppeals(data)
+        setLoading(false)
+      },
+      (subscribeError) => {
+        if (!alive.current) return
+        setError(subscribeError?.message || 'We could not load the appeals. Check your connection and try again.')
+        setLoading(false)
+      },
+    )
+    return unsubscribe
+  }, [])
 
   const pledge = useCallback(async (id, amount) => {
     const updated = await pledgeUnits(id, amount)

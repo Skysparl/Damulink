@@ -5,6 +5,7 @@ const USER_KEY = 'damulink.users'
 const APPEALS_KEY = 'damulink.appeals'
 const SESSION_KEY = 'damulink.session'
 const authListeners = new Set()
+const appealListeners = new Set()
 
 function read(key, fallback) {
   const raw = window.localStorage.getItem(key)
@@ -18,6 +19,18 @@ function read(key, fallback) {
 
 function write(key, value) {
   window.localStorage.setItem(key, JSON.stringify(value))
+}
+
+function saveAppeals(appeals) {
+  write(APPEALS_KEY, appeals)
+  const sorted = listLocalAppeals()
+  appealListeners.forEach((listener) => listener(sorted))
+}
+
+export function subscribeLocalAppeals(listener) {
+  appealListeners.add(listener)
+  listener(listLocalAppeals())
+  return () => appealListeners.delete(listener)
 }
 
 function makeId(prefix) {
@@ -107,7 +120,7 @@ export function createLocalAppeal(data) {
   }
 
   appeals.unshift(appeal)
-  write(APPEALS_KEY, appeals)
+  saveAppeals(appeals)
   return appeal
 }
 
@@ -125,7 +138,7 @@ export function pledgeLocalUnits(id, amount) {
     status: pledge.status,
     updatedAt: new Date().toISOString(),
   }
-  write(APPEALS_KEY, appeals)
+  saveAppeals(appeals)
   return appeals[index]
 }
 
@@ -140,7 +153,7 @@ export function updateLocalAppeal(id, patch) {
   }
 
   appeals[index] = { ...appeals[index], ...patch, updatedAt: new Date().toISOString() }
-  write(APPEALS_KEY, appeals)
+  saveAppeals(appeals)
   return appeals[index]
 }
 
@@ -155,5 +168,5 @@ export function deleteLocalAppeal(id) {
   }
 
   appeals.splice(index, 1)
-  write(APPEALS_KEY, appeals)
+  saveAppeals(appeals)
 }

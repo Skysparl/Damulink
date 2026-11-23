@@ -5,6 +5,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  onSnapshot,
   orderBy,
   query,
   runTransaction,
@@ -20,6 +21,7 @@ import {
   getLocalAppeal,
   listLocalAppeals,
   pledgeLocalUnits,
+  subscribeLocalAppeals,
   updateLocalAppeal,
 } from './localBackend.js'
 
@@ -51,6 +53,17 @@ export async function fetchAppeals() {
 
   const snapshot = await getDocs(query(collection(db, 'appeals'), orderBy('createdAt', 'desc')))
   return snapshot.docs.map(toAppeal)
+}
+
+// Real-time feed: Firestore onSnapshot, or local-storage change events in demo mode.
+export function subscribeToAppeals(onData, onError) {
+  if (!isFirebaseConfigured) return subscribeLocalAppeals(onData)
+
+  return onSnapshot(
+    query(collection(db, 'appeals'), orderBy('createdAt', 'desc')),
+    (snapshot) => onData(snapshot.docs.map(toAppeal)),
+    (error) => onError?.(error),
+  )
 }
 
 export async function fetchAppeal(id) {
