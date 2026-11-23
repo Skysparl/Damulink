@@ -1,12 +1,15 @@
 import { useState } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 
 import Field from '../components/Field'
+import GoogleButton from '../components/GoogleButton'
 import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
-  const { user, loading, login } = useAuth()
+  const { user, loading, login, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const redirectTo = location.state?.from || '/dashboard'
 
   const [form, setForm] = useState({ email: '', password: '' })
   const [errors, setErrors] = useState({})
@@ -14,12 +17,25 @@ export default function Login() {
   const [busy, setBusy] = useState(false)
 
   if (!loading && user) {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to={redirectTo} replace />
   }
 
   function handleChange(event) {
     const { name, value } = event.target
     setForm((current) => ({ ...current, [name]: value }))
+  }
+
+  async function handleGoogle() {
+    setFormError('')
+    setBusy(true)
+    try {
+      await loginWithGoogle()
+      navigate(redirectTo, { replace: true })
+    } catch (error) {
+      setFormError(error.message || 'Google sign-in failed. Please try again.')
+    } finally {
+      setBusy(false)
+    }
   }
 
   async function handleSubmit(event) {
@@ -42,7 +58,7 @@ export default function Login() {
     setBusy(true)
     try {
       await login(form.email.trim(), form.password)
-      navigate('/dashboard', { replace: true })
+      navigate(redirectTo, { replace: true })
     } catch (error) {
       setFormError(error.message || 'Could not log you in. Please try again.')
     } finally {
@@ -78,6 +94,16 @@ export default function Login() {
             Log in to pledge blood and manage your appeals.
           </p>
 
+          {location.state?.from && !formError ? (
+            <p role="status" className="mt-5 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-800">
+              Please log in to continue.
+            </p>
+          ) : null}
+          {location.state?.from && !formError ? (
+            <p role="status" className="mt-5 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-800">
+              Please log in to continue.
+            </p>
+          ) : null}
           {formError ? (
             <p
               role="alert"
@@ -116,6 +142,12 @@ export default function Login() {
               {busy ? 'Logging in…' : 'Log in'}
             </button>
           </form>
+          <div className="my-5 flex items-center gap-3 text-xs text-muted">
+            <span className="h-px flex-1 bg-slate-200" />
+            or
+            <span className="h-px flex-1 bg-slate-200" />
+          </div>
+          <GoogleButton onClick={handleGoogle} disabled={busy} />
 
           <p className="mt-6 text-sm text-slate-600">
             New to DamuLink?{' '}

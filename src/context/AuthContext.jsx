@@ -9,6 +9,7 @@ import {
 import {
     subscribeToAuth,
     signIn,
+    signInWithGoogle,
     signUp,
     signOutUser,
 } from '../services/authService.js';
@@ -33,6 +34,12 @@ export function AuthProvider({ children }) {
         return account;
     }, []);
 
+    const loginWithGoogle = useCallback(async () => {
+        const account = await signInWithGoogle();
+        setUser(account);
+        return account;
+    }, []);
+
     const register = useCallback(async (name, email, password) => {
         const account = await signUp(name, email, password);
         setUser(account);
@@ -45,8 +52,8 @@ export function AuthProvider({ children }) {
     }, []);
 
     const value = useMemo(
-        () => ({ user, loading, login, register, logout }),
-        [user, loading, login, register, logout]
+        () => ({ user, loading, login, loginWithGoogle, register, logout }),
+        [user, loading, login, loginWithGoogle, register, logout]
     );
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

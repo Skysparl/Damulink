@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 
 import Field from '../components/Field'
+import GoogleButton from '../components/GoogleButton'
 import { useAuth } from '../context/AuthContext'
 
 const emptyForm = {
@@ -12,7 +13,7 @@ const emptyForm = {
 }
 
 export default function Register() {
-  const { user, loading, register } = useAuth()
+  const { user, loading, register, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
 
   const [form, setForm] = useState(emptyForm)
@@ -27,6 +28,19 @@ export default function Register() {
   function handleChange(event) {
     const { name, value } = event.target
     setForm((current) => ({ ...current, [name]: value }))
+  }
+
+  async function handleGoogle() {
+    setFormError('')
+    setBusy(true)
+    try {
+      await loginWithGoogle()
+      navigate('/dashboard', { replace: true })
+    } catch (error) {
+      setFormError(error.message || 'Google sign-in failed. Please try again.')
+    } finally {
+      setBusy(false)
+    }
   }
 
   async function handleSubmit(event) {
@@ -141,6 +155,12 @@ export default function Register() {
             {busy ? 'Creating account…' : 'Create account'}
           </button>
         </form>
+        <div className="my-5 flex items-center gap-3 text-xs text-muted">
+          <span className="h-px flex-1 bg-slate-200" />
+          or
+          <span className="h-px flex-1 bg-slate-200" />
+        </div>
+        <GoogleButton onClick={handleGoogle} disabled={busy} label="Sign up with Google" />
 
         <p className="mt-6 text-sm text-slate-600">
           Already have an account?{' '}
