@@ -99,11 +99,6 @@ export default function Login() {
               Please log in to continue.
             </p>
           ) : null}
-          {location.state?.from && !formError ? (
-            <p role="status" className="mt-5 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-800">
-              Please log in to continue.
-            </p>
-          ) : null}
           {formError ? (
             <p
               role="alert"

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 
 import AppealCard from '../components/AppealCard'
 import EmptyState from '../components/EmptyState'
@@ -14,7 +14,8 @@ export default function Dashboard() {
   const { myAppeals, loading, error } = useAppeals()
   const [selected, setSelected] = useState(null)
   const [busy, setBusy] = useState(false)
-  const [notice, setNotice] = useState('')
+  const location = useLocation()
+  const [notice, setNotice] = useState(location.state?.message || '')
 
   const active = myAppeals.filter((appeal) => appeal.status !== APPEAL_STATUS.FULFILLED)
   const pledged = myAppeals.reduce((total, appeal) => total + Number(appeal.unitsPledged || 0), 0)
