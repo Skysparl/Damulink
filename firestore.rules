@@ -1,0 +1,52 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function validBloodType(value) {
+      return value in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+    }
+
+    function validAppeal(data) {
+      return data.patientName is string && data.patientName.size() > 0 && data.patientName.size() <= 80
+        && data.hospital is string && data.hospital.size() > 0 && data.hospital.size() <= 120
+        && data.county is string && data.county.size() > 0
+        && validBloodType(data.bloodType)
+        && data.units is int && data.units >= 1 && data.units <= 20
+        && data.unitsPledged is int && data.unitsPledged >= 0 && data.unitsPledged <= data.units
+        && data.urgency in ['critical', 'urgent', 'routine']
+        && data.status in ['open', 'fulfilled']
+        && data.contactPhone is string && data.contactPhone.matches('^0[17][0-9]{8}$');
+    }
+
+    match /appeals/{appealId} {
+      // Anyone can read appeals so donors can find them without an account.
+      allow read: if true;
+
+      allow create: if signedIn()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.unitsPledged == 0
+        && request.resource.data.status == 'open'
+        && validAppeal(request.resource.data);
+
+      // Owners can edit or close their own appeal.
+      allow update: if signedIn()
+        && resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdBy == resource.data.createdBy
+        && validAppeal(request.resource.data);
+
+      // Any signed-in donor can pledge, but may only raise unitsPledged.
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['unitsPledged', 'status', 'updatedAt'])
+        && request.resource.data.unitsPledged > resource.data.unitsPledged
+        && request.resource.data.unitsPledged <= resource.data.units
+        && request.resource.data.status in ['open', 'fulfilled'];
+
+      allow delete: if signedIn() && resource.data.createdBy == request.auth.uid;
+    }
+  }
+}

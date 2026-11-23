@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { BloodTypeBadge, UrgencyBadge } from './Badges.jsx';
-import { remainingUnits } from '../utils/appealLogic.js';
+import { progressPercent, remainingUnits } from '../utils/appealLogic.js';
 
 // If format.js already exports formatDate, import it and use that instead.
 function shortDate(value) {
@@ -26,7 +26,7 @@ export default function AppealCard({ appeal }) {
   } = appeal;
 
   const left = remainingUnits(appeal);
-  const percent = Math.min(100, Math.round((unitsPledged / units) * 100));
+  const percent = progressPercent(appeal);
   const fulfilled = status === 'fulfilled';
 
   return (

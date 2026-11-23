@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 
 import AppealCard from '../components/AppealCard'
 import EmptyState from '../components/EmptyState'
 import Modal from '../components/Modal'
 import { useAuth } from '../context/AuthContext'
 import { useAppeals } from '../hooks/useAppeals'
-import { removeAppeal } from '../services/appealService'
+import { editAppeal, removeAppeal } from '../services/appealService'
 import { APPEAL_STATUS } from '../utils/constants'
 
 export default function Dashboard() {
@@ -14,10 +14,22 @@ export default function Dashboard() {
   const { myAppeals, loading, error } = useAppeals()
   const [selected, setSelected] = useState(null)
   const [busy, setBusy] = useState(false)
-  const [notice, setNotice] = useState('')
+  const location = useLocation()
+  const [notice, setNotice] = useState(location.state?.message || '')
 
   const active = myAppeals.filter((appeal) => appeal.status !== APPEAL_STATUS.FULFILLED)
   const pledged = myAppeals.reduce((total, appeal) => total + Number(appeal.unitsPledged || 0), 0)
+
+  async function toggleStatus(appeal) {
+    const nextStatus =
+      appeal.status === APPEAL_STATUS.FULFILLED ? APPEAL_STATUS.OPEN : APPEAL_STATUS.FULFILLED
+    try {
+      await editAppeal(appeal.id, { status: nextStatus })
+      setNotice(nextStatus === APPEAL_STATUS.FULFILLED ? 'Appeal marked as fulfilled.' : 'Appeal re-opened.')
+    } catch (err) {
+      setNotice(err.message || 'Could not update that appeal.')
+    }
+  }
 
   async function handleDelete() {
     if (!selected) return
@@ -68,13 +80,22 @@ export default function Dashboard() {
           {myAppeals.map((appeal) => (
             <div key={appeal.id} className="flex flex-col gap-3">
               <AppealCard appeal={appeal} />
-              <button
-                type="button"
-                onClick={() => setSelected(appeal)}
-                className="self-end text-sm font-medium text-red-700 hover:underline"
-              >
-                Delete appeal
-              </button>
+              <div className="flex items-center justify-end gap-4">
+                <button
+                  type="button"
+                  onClick={() => toggleStatus(appeal)}
+                  className="text-sm font-medium text-teal-700 hover:underline"
+                >
+                  {appeal.status === APPEAL_STATUS.FULFILLED ? 'Re-open appeal' : 'Mark as fulfilled'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelected(appeal)}
+                  className="text-sm font-medium text-red-700 hover:underline"
+                >
+                  Delete appeal
+                </button>
+              </div>
             </div>
           ))}
         </div>

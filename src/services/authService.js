@@ -1,6 +1,8 @@
 import {
+  GoogleAuthProvider,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  signInWithPopup,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
@@ -39,6 +41,10 @@ function friendlyError(error) {
     return new Error('Wrong email or password')
   }
   if (code.includes('network-request-failed')) return new Error('No internet connection')
+  if (code.includes('popup-closed-by-user') || code.includes('cancelled-popup-request')) {
+    return new Error('Google sign-in was cancelled')
+  }
+  if (code.includes('popup-blocked')) return new Error('Allow pop-ups to sign in with Google')
   return new Error(error?.message || 'Something went wrong. Try again.')
 }
 
@@ -64,6 +70,19 @@ export async function signUp(name, email, password) {
   try {
     const result = await createUserWithEmailAndPassword(auth, String(email).trim(), password)
     await updateProfile(result.user, { displayName: String(name).trim() })
+    return toAccount(result.user)
+  } catch (error) {
+    throw friendlyError(error)
+  }
+}
+
+export async function signInWithGoogle() {
+  if (!isFirebaseConfigured) {
+    throw new Error('Google sign-in needs Firebase. Add your keys to .env to enable it.')
+  }
+
+  try {
+    const result = await signInWithPopup(auth, new GoogleAuthProvider())
     return toAccount(result.user)
   } catch (error) {
     throw friendlyError(error)
