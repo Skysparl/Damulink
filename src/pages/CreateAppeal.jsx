@@ -56,7 +56,7 @@ export default function CreateAppeal() {
           units: Number(values.units),
           unitsPledged: 0,
           urgency: values.urgency,
-          contactPhone: values.contactPhone.trim(),
+          contactPhone: values.contactPhone.replace(/\s/g, ''),
           status: APPEAL_STATUS.OPEN,
           lat: place ? place.lat : null,
           lon: place ? place.lon : null,

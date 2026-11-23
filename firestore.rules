@@ -15,7 +15,7 @@ service cloud.firestore {
         && data.hospital is string && data.hospital.size() > 0 && data.hospital.size() <= 120
         && data.county is string && data.county.size() > 0
         && validBloodType(data.bloodType)
-        && data.units is int && data.units >= 1 && data.units <= 50
+        && data.units is int && data.units >= 1 && data.units <= 20
         && data.unitsPledged is int && data.unitsPledged >= 0 && data.unitsPledged <= data.units
         && data.urgency in ['critical', 'urgent', 'routine']
         && data.status in ['open', 'fulfilled']
